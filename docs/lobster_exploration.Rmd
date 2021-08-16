@@ -1,0 +1,88 @@
+---
+title: "lobster exploration"
+author: "Shale"
+date: "8/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(tidyverse)
+library(janitor)
+```
+
+## consider THIS
+
+```{r}
+raw_lobsters = read_csv(here("data", "Lobster_Abundance.csv"), na = c("", "-99999")) %>% 
+  clean_names() %>% 
+  uncount(count)
+# uncount unpacks count columns into their individual members
+```
+
+```{r}
+view_lobsters = raw_lobsters %>% 
+  group_by(site, year) %>% 
+  summarise(l_count = n(),
+            mean_length = mean(size_mm, na.rm = TRUE))
+```
+
+```{r}
+ggplot(data = view_lobsters, aes(x = year, y = l_count)) +
+  geom_point() +
+  facet_wrap(~site)
+```
+
+## Legal
+
+```{r}
+legal_lob = raw_lobsters %>% 
+  filter(year == 2020) %>% 
+  mutate(legality = case_when(size_mm > 79 ~ "illegal",
+                              size_mm <= 79 ~ "legal")) %>% 
+  group_by(site, legality) %>% 
+  summarise(l_count = n())
+```
+
+```{r}
+ggplot(data = legal_lob, aes(x = site, y = l_count)) +
+  geom_col(position = "fill", aes(fill = legality))
+```
+
+## Wrangling practice
+
+```{r}
+p1_f = raw_lobsters %>% filter(site %in% c("IVEE", "CARP", "NAPL"))
+
+p2_f = raw_lobsters %>% filter(month == 8)
+
+p3_f = raw_lobsters %>% filter(site == "AQUE" | size_mm > 70)
+
+p4_f = raw_lobsters %>% filter(site != "NAPL")
+```
+
+```{r}
+p1_gs = raw_lobsters %>% group_by(site) %>% summarise(mean_length = mean(size_mm, na.rm = TRUE),
+                                                      sd_length = sd(size_mm, na.rm = TRUE))
+p2_gs = raw_lobsters %>% group_by(site, month) %>% summarise(max_length = max(size_mm, na.rm = TRUE))
+```
+
+```{r}
+p1_m = raw_lobsters %>% mutate(length_cm = size_mm / 10)
+
+p2_m = raw_lobsters %>%  mutate(site = tolower(site))
+
+p3_m = raw_lobsters %>% mutate(area = as.character(area))
+```
+
+```{r}
+p1_cw = raw_lobsters %>% mutate(size_bin = case_when(size_mm <= 70 ~ "small",
+                                                     size_mm > 70 ~ "large"))
+p2_cw = raw_lobsters %>% mutate(designation = case_when(site == "IVEE" | site == "NAPL" ~ "MPA",
+                                                        TRUE ~ "not MPA"))
+```
+
+
+
+

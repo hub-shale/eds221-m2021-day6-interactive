@@ -1,0 +1,60 @@
+---
+title: "Monday tasks"
+author: "Shale"
+date: "8/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(tidyverse)
+```
+
+## World Bank data for tidy data practice
+
+```{r}
+wb_indicators = read_csv(here("data", "wb_indicators.csv"), na = c("..", ""))
+```
+
+```{r}
+wb_indicators_tidy = wb_indicators %>% pivot_longer(cols = "2001 [YR2001]": "2020 [YR2020]",
+                                                    names_to = "year",
+                                                    values_to = "indicator_val") %>% 
+  separate(col = year, into = c("year", "year_char", sep = " ")) %>%
+  select(-year_char, -"Country Code", -"Series Code") %>% 
+  drop_na("Series Name") %>% 
+  pivot_wider(names_from = "Series Name", values_from = indicator_val)
+  
+```
+
+```{r}
+# subsequent wrangling
+names(wb_indicators_tidy) = c("country", "year",  "NULL", "access_clean_fuels", "access_electricty", "co2_emissions", "fossil_fuel_cons", "water_stress")
+
+# rename() cam do the same thing col-by-col
+# wb_indicators_clean = wb_indicators_tidy %>% rename(co2_emissions = "CO2 emissions (kt)", water_stress = "...")
+
+
+wb_indicators_tidy = wb_indicators_tidy %>% select(-"NULL")
+# still don't know why the blank column showed up in the first place
+
+```
+
+## side practice
+
+```{r}
+df = tribble(~name, ~A, ~B, ~C,
+             "dog", 2, 5, 4,
+             "cat", 3, 6, 1,
+             "llama", 6, 9, 4)
+```
+
+```{r}
+edit_df = df %>% pivot_longer(cols = -name, names_to = "quadrant", values_to = "pack size")
+```
+To reverse `pivot_longer()`, use `pivot_wider()`
+```{r}
+oops_df = edit_df %>% pivot_wider(names_from = quadrant, values_from = "pack size")
+```
+

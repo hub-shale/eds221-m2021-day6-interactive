@@ -1,0 +1,120 @@
+---
+title: "afternoon_lecture"
+author: "Shale"
+date: "8/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(palmerpenguins)
+```
+
+## Warm Up
+
+```{r}
+rent_tidy = us_rent_income %>% pivot_wider(names_from = variable, values_from = estimate) %>%  select(-moe)
+```
+
+## Penguins practice
+
+Some important functions to remember
+
+`filter()`
+`select()`
+`mutate()`
+`case_when()`
+`group_by() %>% summarize()`
+
+
+## `dplyr::filter()`
+keep or exclude **rows** based on conditions
+```{r}
+fil_exact = filter(.data = penguins, island == "Torgersen")
+# unique() is a good one to remember for testing
+
+fil_combo = filter(.data = penguins, species == "Gentoo" & sex == "female")
+# same as: fil_combo = penguins %>% filter(species = "Gentoo", sex == "female")
+
+no_g = filter(.data = penguins, species != "Gentoo")
+
+adelie_185 = penguins %>% filter(species == "Adelie" & flipper_length_mm >= 185)
+```
+
+%in% looks for any matches within a vector, returns TRUE if value exists within that row.
+
+```{r}
+island_check = penguins %>% filter(island %in% c("Dream", "Torgersen"))
+# exclusion with %in% would be !island
+```
+
+## `dplyr::select()`
+select or exclude **columns**
+
+```{r}
+chonk = select(.data = penguins, body_mass_g)
+
+halfsies = penguins %>% select(species, year, bill_length_mm:flipper_length_mm)
+# note: this moves the year column to be the second column instead of the last
+
+a_sex = select(.data = penguins, -sex)
+# same as a_sex = select(.data = penguins, -7)
+
+fatties = penguins %>% select(species, island, body_mass_g) %>% filter(body_mass_g >= 3600)
+```
+
+## `mutate()`
+add columns or change existing columns (keeps everything that is already there)
+
+```{r}
+# same dataset, convert body mass into kg
+penguins_units = penguins_kg %>% mutate(body_mass_kg = body_mass_g / 1000,
+                                     flipper_length_cm = flipper_length_mm / 10)
+
+# this doesnt exactly work, probably pattern only accepts one input (not happy with logical | )
+# penguins_vowels = penguins %>% mutate(species = str_replace(species, pattern = "a" | "e" | "i" | "o" | "A", replacement = "Y"))
+
+
+# give mutate() a new column name to create a new column, give it an existing column name to have it overwrite an existing column.
+```
+
+## `case_when()`
+handy variation on if-else
+
+```{r}
+size_cat = penguins %>% mutate(size_category = case_when(flipper_length_mm < 185 ~ "small",
+                                                         flipper_length_mm >= 185 ~ "medium"))
+
+bill_cat =  mutate(.data = penguins,
+                   bird_bill_bin = case_when(bill_length_mm < 38 ~ "short bill",
+                                             bill_length_mm >= 38 & bill_length_mm < 43 ~ "medium bill",
+                                             bill_length_mm >= 43 ~ "long bill"))
+# last argument to case_when() as a catch-all is TRUE ~ "..."
+# note that this will also coerce all NA values if any exist
+```
+
+## `group_by() %>% summarize()`
+find summary values by groups, returns in summary table
+
+```{r}
+ sum_i = penguins %>% group_by(species, island) %>%
+  summarise(mean_flipper_length = mean(flipper_length_mm, na.rm = TRUE),
+            sd.flipper_length = sd(flipper_length_mm, na.rm = TRUE))
+```
+
+
+## practice
+
+```{r}
+bionic_penguins = penguins %>%
+  filter(body_mass_g >= 3500) %>%
+  select(species, sex, flipper_length_mm) %>% 
+  group_by(species, sex) %>% 
+  filter(!is.na(sex)) %>% 
+  summarise(bio_mean = mean(flipper_length_mm, na.rm = TRUE),
+            bio_sd = sd(flipper_length_mm, na.rm = TRUE),
+            bio_max = max(flipper_length_mm, na.rm = TRUE),
+            bio_min = min(flipper_length_mm, na.rm = TRUE))
+```
+
